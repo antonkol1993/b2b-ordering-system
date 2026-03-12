@@ -1,1 +1,6 @@
+/workspaces/b2b-ordering-system/src/main/java/com/yourapp/tenant/entity/Tenant.java
 /workspaces/b2b-ordering-system/src/main/java/com/yourapp/B2bSystemApplication.java
+/workspaces/b2b-ordering-system/src/main/java/com/yourapp/config/SecurityConfig.java
+/workspaces/b2b-ordering-system/src/main/java/com/yourapp/tenant/service/TenantService.java
+/workspaces/b2b-ordering-system/src/main/java/com/yourapp/tenant/controller/TenantController.java
+/workspaces/b2b-ordering-system/src/main/java/com/yourapp/tenant/repository/TenantRepository.java
