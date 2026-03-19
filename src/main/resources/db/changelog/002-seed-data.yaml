@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-seed-nike-admin
+      author: cursor
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              INSERT INTO tenants (id, slug, name, telegram_chat_id, created_at)
+              VALUES (1, 'nike', 'Nike', NULL, NOW())
+              ON CONFLICT (slug) DO NOTHING;
+
+              INSERT INTO app_user (id, tenant_id, telegram_id, email, password, role, created_at)
+              VALUES (1, 1, NULL, 'admin@nike.com', '123', 'ADMIN', NOW())
+              ON CONFLICT (email) DO NOTHING;
+
+              SELECT setval('tenants_id_seq', (SELECT COALESCE(MAX(id), 1) FROM tenants));
+              SELECT setval('app_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM app_user));
+              SELECT setval('product_id_seq', (SELECT COALESCE(MAX(id), 1) FROM product));
+              SELECT setval('app_order_id_seq', (SELECT COALESCE(MAX(id), 1) FROM app_order));
+              SELECT setval('order_item_id_seq', (SELECT COALESCE(MAX(id), 1) FROM order_item));
+

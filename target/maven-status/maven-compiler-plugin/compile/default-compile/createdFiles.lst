@@ -1,6 +1,0 @@
-com/yourapp/B2bSystemApplication.class
-com/yourapp/config/SecurityConfig.class
-com/yourapp/tenant/entity/Tenant.class
-com/yourapp/tenant/controller/TenantController.class
-com/yourapp/tenant/repository/TenantRepository.class
-com/yourapp/tenant/service/TenantService.class

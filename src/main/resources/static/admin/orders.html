@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin Orders</title>
+</head>
+<body>
+<h2>Admin Orders</h2>
+
+<div style="margin-bottom: 16px;">
+  <button onclick="window.location.href='/admin/products.html'">Products</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<pre id="out" style="white-space: pre-wrap;"></pre>
+
+<script>
+  async function api(url, options) {
+    return fetch(url, Object.assign({credentials: 'include'}, options));
+  }
+
+  async function loadOrders() {
+    const res = await api('/api/admin/orders', {method: 'GET'});
+    if (!res.ok) {
+      document.getElementById('out').textContent = 'Failed: ' + await res.text();
+      return;
+    }
+    const orders = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(orders, null, 2);
+  }
+
+  async function logout() {
+    await api('/api/admin/logout', {method: 'POST'}).catch(() => {});
+    window.location.href = '/admin/login.html';
+  }
+
+  loadOrders();
+</script>
+</body>
+</html>
+

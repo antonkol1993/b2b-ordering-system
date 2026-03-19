@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Ordering App</title>
+</head>
+<body>
+<h2>Заказ</h2>
+
+<pre id="out" style="white-space: pre-wrap;"></pre>
+
+<div style="margin-top: 12px;">
+  <button onclick="sendOrder()" type="button">Send Order</button>
+</div>
+
+<h3>Products</h3>
+<div id="products"></div>
+
+<h3>Comment</h3>
+<textarea id="comment" rows="3" style="width: 100%;"></textarea>
+
+<div id="manualInit" style="margin-top: 16px; display: none;">
+  <h3>Manual initData (debug)</h3>
+  <textarea id="initData" rows="5" style="width: 100%;"></textarea>
+  <button onclick="doAuth()" type="button">Auth</button>
+</div>
+
+<script>
+  const out = document.getElementById('out');
+  const productsEl = document.getElementById('products');
+  const commentEl = document.getElementById('comment');
+
+  let products = [];
+
+  function setOut(text) {
+    out.textContent = text;
+  }
+
+  function getInitDataFromTelegram() {
+    try {
+      return window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData
+        ? window.Telegram.WebApp.initData
+        : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function api(url, options) {
+    return fetch(url, Object.assign({credentials: 'include'}, options));
+  }
+
+  async function doAuth() {
+    const initData = document.getElementById('initData').value;
+    if (!initData) {
+      setOut('initData is empty');
+      return;
+    }
+
+    setOut('Auth...');
+    const res = await api('/api/telegram/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({initData})
+    });
+
+    if (!res.ok) {
+      setOut('Auth failed: ' + await res.text());
+      return;
+    }
+
+    setOut('Auth OK. Loading products...');
+    await loadProducts();
+  }
+
+  function renderProducts() {
+    productsEl.innerHTML = '';
+    for (const p of products) {
+      const row = document.createElement('div');
+      row.style.marginBottom = '8px';
+
+      row.innerHTML = `
+        <div><b>${p.name}</b> (price: ${p.price})</div>
+        <div>
+          <label>Qty</label>
+          <input type="number" min="0" value="0" id="qty_${p.id}" style="width: 90px;"/>
+        </div>
+      `;
+      productsEl.appendChild(row);
+    }
+  }
+
+  async function loadProducts() {
+    const res = await api('/api/products', {method: 'GET'});
+    if (!res.ok) {
+      setOut('Load products failed: ' + await res.text());
+      return;
+    }
+    products = await res.json();
+    renderProducts();
+    setOut('Ready. Choose quantities and press "Send Order".');
+  }
+
+  async function sendOrder() {
+    const items = [];
+    for (const p of products) {
+      const qty = Number(document.getElementById('qty_' + p.id).value || 0);
+      if (qty > 0) {
+        items.push({productId: p.id, quantity: qty});
+      }
+    }
+
+    if (!items.length) {
+      alert('Select at least one product');
+      return;
+    }
+
+    const comment = commentEl.value || null;
+    setOut('Sending order...');
+
+    const res = await api('/api/orders', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({items, comment})
+    });
+
+    if (!res.ok) {
+      setOut('Order failed: ' + await res.text());
+      return;
+    }
+
+    const order = await res.json();
+    setOut('Order created. ID=' + order.id);
+  }
+
+  (async function init() {
+    const initData = getInitDataFromTelegram();
+    if (!initData) {
+      document.getElementById('manualInit').style.display = 'block';
+      setOut('Telegram initData not found. Use manual auth (debug).');
+      return;
+    }
+
+    document.getElementById('initData').value = initData;
+    await doAuth();
+  })();
+</script>
+</body>
+</html>
+

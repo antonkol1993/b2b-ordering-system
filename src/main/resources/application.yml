@@ -3,13 +3,20 @@ spring:
     url: jdbc:postgresql://localhost:5432/b2b
     username: postgres
     password: postgres
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  main:
+    allow-bean-definition-overriding: true
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
         format_sql: true
     dialect: org.hibernate.dialect.PostgreSQLDialect
+
+telegram:
+  botToken: ${TELEGRAM_BOT_TOKEN:}
 server:
   port: 8080

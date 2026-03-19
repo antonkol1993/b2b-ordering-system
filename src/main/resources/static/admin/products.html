@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin Products</title>
+</head>
+<body>
+<h2>Admin Products</h2>
+
+<div style="margin-bottom: 16px;">
+  <button onclick="window.location.href='/admin/orders.html'">Orders</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<h3>Create / Update</h3>
+<input type="hidden" id="productId"/>
+<div>
+  <label>Name</label>
+  <input id="name" type="text" required/>
+</div>
+<div>
+  <label>Description</label>
+  <input id="description" type="text"/>
+</div>
+<div>
+  <label>Price</label>
+  <input id="price" type="number" step="0.01" required/>
+</div>
+<button id="saveBtn">Save</button>
+
+<h3 style="margin-top: 24px;">Products</h3>
+<div id="list"></div>
+
+<script>
+  async function api(url, options) {
+    return fetch(url, Object.assign({
+      credentials: 'include'
+    }, options));
+  }
+
+  const listEl = document.getElementById('list');
+
+  async function loadProducts() {
+    const res = await api('/api/admin/products', {method: 'GET'});
+    if (!res.ok) {
+      listEl.textContent = 'Failed: ' + await res.text();
+      return;
+    }
+    const products = await res.json();
+    lastProducts = products;
+
+    if (!products.length) {
+      listEl.textContent = 'No products';
+      return;
+    }
+
+    const rows = products.map(p => {
+      return `
+        <tr>
+          <td>${p.id}</td>
+          <td>${escapeHtml(p.name || '')}</td>
+          <td>${escapeHtml(p.description || '')}</td>
+          <td>${p.price}</td>
+          <td>
+            <button type="button" onclick="editProduct(${p.id})">Edit</button>
+            <button type="button" onclick="deleteProduct(${p.id})">Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    listEl.innerHTML = `
+      <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  let lastProducts = [];
+
+  function fill(product) {
+    document.getElementById('productId').value = product.id;
+    document.getElementById('name').value = product.name || '';
+    document.getElementById('description').value = product.description || '';
+    document.getElementById('price').value = product.price;
+  }
+
+  window.editProduct = async (productId) => {
+    const product = lastProducts.find(p => p.id === productId);
+    if (!product) {
+      alert('Product not found in current list');
+      return;
+    }
+    fill(product);
+    window.scrollTo(0, 0);
+  };
+
+  window.deleteProduct = async (productId) => {
+    if (!confirm('Delete product #' + productId + '?')) return;
+    const res = await api('/api/admin/products/' + productId, {method: 'DELETE'});
+    if (!res.ok) {
+      alert('Delete failed: ' + await res.text());
+      return;
+    }
+    document.getElementById('productId').value = '';
+    await loadProducts();
+  };
+
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const productId = document.getElementById('productId').value;
+    const body = {
+      name: document.getElementById('name').value,
+      description: document.getElementById('description').value,
+      price: Number(document.getElementById('price').value)
+    };
+
+    const opts = {
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    };
+
+    let res;
+    if (productId) {
+      res = await api('/api/admin/products/' + productId, Object.assign(opts, {method: 'PUT'}));
+    } else {
+      res = await api('/api/admin/products', Object.assign(opts, {method: 'POST'}));
+    }
+
+    if (!res.ok) {
+      alert('Save failed: ' + await res.text());
+      return;
+    }
+
+    // reset
+    document.getElementById('productId').value = '';
+    await loadProducts();
+    alert('Saved');
+  });
+
+  async function logout() {
+    await api('/api/admin/logout', {method: 'POST'}).catch(() => {});
+    window.location.href = '/admin/login.html';
+  }
+
+  loadProducts();
+</script>
+</body>
+</html>
+
