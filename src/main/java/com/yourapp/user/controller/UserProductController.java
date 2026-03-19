@@ -20,8 +20,7 @@ public class UserProductController {
     @GetMapping
     public List<Product> list(HttpSession session) {
         sessionService.requireUserId(session);
-        Long tenantId = sessionService.requireTenantId(session);
-        return productService.listByTenant(tenantId);
+        return productService.listByTenant();
     }
 }
 

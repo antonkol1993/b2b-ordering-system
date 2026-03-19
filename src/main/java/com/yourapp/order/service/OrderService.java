@@ -1,16 +1,19 @@
 package com.yourapp.order.service;
 
 import com.yourapp.common.AppConstants;
+import com.yourapp.common.security.TenantContext;
 import com.yourapp.order.entity.Order;
 import com.yourapp.order.entity.OrderItem;
+import com.yourapp.order.dto.CreateOrderDto;
+import com.yourapp.order.dto.CreateOrderItemDto;
 import com.yourapp.order.repository.OrderRepository;
 import com.yourapp.product.entity.Product;
 import com.yourapp.product.repository.ProductRepository;
 import com.yourapp.tenant.entity.Tenant;
-import com.yourapp.tenant.repository.TenantRepository;
 import com.yourapp.user.entity.User;
 import com.yourapp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,11 +27,10 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private final TenantRepository tenantRepository;
 
-    public Order create(Long tenantId, Long userId, CreateOrderRequest request) {
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
+    @Transactional
+    public Order create(Long userId, CreateOrderDto request) {
+        Long tenantId = TenantContext.requireTenantId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -38,16 +40,23 @@ public class OrderService {
         }
 
         Order order = new Order();
-        order.setTenant(tenant);
+        order.setTenant(tenantRef(tenantId));
         order.setUser(user);
         order.setStatus(AppConstants.ORDER_STATUS_CREATED);
         order.setComment(request.comment());
         order.setCreatedAt(LocalDateTime.now());
 
         List<OrderItem> items = new ArrayList<>();
-        for (CreateOrderItem itemReq : request.items()) {
+        for (CreateOrderItemDto itemReq : request.items()) {
             Product product = productRepository.findByIdAndTenant_Id(itemReq.productId(), tenantId)
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemReq.productId()));
+
+            if (product.getStock() == null || product.getStock() < itemReq.quantity()) {
+                throw new IllegalArgumentException("Not enough stock for product: " + product.getId());
+            }
+
+            product.setStock(product.getStock() - itemReq.quantity());
+            productRepository.save(product);
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
@@ -62,16 +71,20 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    public List<Order> listByTenant(Long tenantId) {
+    public List<Order> listByTenant() {
+        Long tenantId = TenantContext.requireTenantId();
         return orderRepository.findAllByTenant_Id(tenantId);
     }
 
-    public java.util.Optional<Order> findByTenantAndId(Long tenantId, Long orderId) {
+    public java.util.Optional<Order> findByTenantAndId(Long orderId) {
+        Long tenantId = TenantContext.requireTenantId();
         return orderRepository.findByIdAndTenant_Id(orderId, tenantId);
     }
 
-    public record CreateOrderRequest(List<CreateOrderItem> items, String comment) {}
-
-    public record CreateOrderItem(Long productId, Integer quantity) {}
+    private static Tenant tenantRef(Long tenantId) {
+        Tenant tenant = new Tenant();
+        tenant.setId(tenantId);
+        return tenant;
+    }
 }
 

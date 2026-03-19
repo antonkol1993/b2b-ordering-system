@@ -1,5 +1,6 @@
 package com.yourapp.admin.controller;
 
+import com.yourapp.admin.dto.AdminLoginDto;
 import com.yourapp.session.SessionService;
 import com.yourapp.common.AppConstants;
 import com.yourapp.user.entity.User;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,7 +22,7 @@ public class AdminAuthController {
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
-    public AdminLoginResponse login(@RequestBody AdminLoginRequest request, HttpSession session) {
+    public AdminLoginResponse login(@Valid @RequestBody AdminLoginDto request, HttpSession session) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
@@ -40,8 +42,6 @@ public class AdminAuthController {
     public void logout(HttpSession session) {
         sessionService.clear(session);
     }
-
-    public record AdminLoginRequest(String email, String password) {}
 
     public record AdminLoginResponse(Long userId, String tenantSlug) {}
 }

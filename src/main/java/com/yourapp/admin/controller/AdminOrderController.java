@@ -20,15 +20,13 @@ public class AdminOrderController {
     @GetMapping
     public List<Order> list(HttpSession session) {
         sessionService.requireAdmin(session);
-        Long tenantId = sessionService.requireTenantId(session);
-        return orderService.listByTenant(tenantId);
+        return orderService.listByTenant();
     }
 
     @GetMapping("/{orderId}")
     public Order get(@PathVariable Long orderId, HttpSession session) {
         sessionService.requireAdmin(session);
-        Long tenantId = sessionService.requireTenantId(session);
-        return orderService.findByTenantAndId(tenantId, orderId).orElseThrow();
+        return orderService.findByTenantAndId(orderId).orElseThrow();
     }
 }
 

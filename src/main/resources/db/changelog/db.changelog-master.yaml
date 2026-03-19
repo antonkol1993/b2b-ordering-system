@@ -3,4 +3,6 @@ databaseChangeLog:
       file: db/changelog/001-initial-schema.yaml
   - include:
       file: db/changelog/002-seed-data.yaml
+  - include:
+      file: db/changelog/003-add-stock.yaml
 

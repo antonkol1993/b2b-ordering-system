@@ -1,10 +1,12 @@
 package com.yourapp.telegram.controller;
 
+import com.yourapp.telegram.dto.TelegramAuthDto;
 import com.yourapp.telegram.service.TelegramAuthService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -14,12 +16,10 @@ public class TelegramAuthController {
 
     @PostMapping("/api/telegram/auth")
     @ResponseStatus(HttpStatus.OK)
-    public TelegramAuthResponse auth(@RequestBody TelegramAuthRequest request, HttpSession session) {
+    public TelegramAuthResponse auth(@Valid @RequestBody TelegramAuthDto request, HttpSession session) {
         var user = telegramAuthService.authFromInitData(request.initData(), session);
         return new TelegramAuthResponse(user.getId(), user.getTenant().getId(), user.getRole());
     }
-
-    public record TelegramAuthRequest(String initData) {}
 
     public record TelegramAuthResponse(Long userId, Long tenantId, String role) {}
 }

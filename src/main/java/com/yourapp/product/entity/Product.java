@@ -28,6 +28,8 @@ public class Product {
 
     private BigDecimal price;
 
+    private Integer stock;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

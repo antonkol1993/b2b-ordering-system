@@ -2,10 +2,12 @@ package com.yourapp.user.controller;
 
 import com.yourapp.order.entity.Order;
 import com.yourapp.order.service.OrderService;
+import com.yourapp.order.dto.CreateOrderDto;
 import com.yourapp.session.SessionService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,10 +18,9 @@ public class UserOrderController {
     private final SessionService sessionService;
 
     @PostMapping
-    public Order create(@RequestBody OrderService.CreateOrderRequest request, HttpSession session) {
-        Long tenantId = sessionService.requireTenantId(session);
+    public Order create(@Valid @RequestBody CreateOrderDto request, HttpSession session) {
         Long userId = sessionService.requireUserId(session);
-        return orderService.create(tenantId, userId, request);
+        return orderService.create(userId, request);
     }
 }
 

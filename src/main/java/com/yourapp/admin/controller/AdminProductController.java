@@ -3,8 +3,10 @@ package com.yourapp.admin.controller;
 import com.yourapp.product.entity.Product;
 import com.yourapp.product.service.ProductService;
 import com.yourapp.session.SessionService;
+import com.yourapp.product.dto.CreateProductDto;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,31 +22,27 @@ public class AdminProductController {
     @GetMapping
     public List<Product> list(HttpSession session) {
         sessionService.requireAdmin(session);
-        Long tenantId = sessionService.requireTenantId(session);
-        return productService.listByTenant(tenantId);
+        return productService.listByTenant();
     }
 
     @PostMapping
-    public Product create(@RequestBody ProductService.CreateProductRequest request, HttpSession session) {
+    public Product create(@Valid @RequestBody CreateProductDto request, HttpSession session) {
         sessionService.requireAdmin(session);
-        Long tenantId = sessionService.requireTenantId(session);
-        return productService.create(tenantId, request);
+        return productService.create(request);
     }
 
     @PutMapping("/{productId}")
     public Product update(@PathVariable Long productId,
-                           @RequestBody ProductService.CreateProductRequest request,
+                           @Valid @RequestBody CreateProductDto request,
                            HttpSession session) {
         sessionService.requireAdmin(session);
-        Long tenantId = sessionService.requireTenantId(session);
-        return productService.update(tenantId, productId, request);
+        return productService.update(productId, request);
     }
 
     @DeleteMapping("/{productId}")
     public void delete(@PathVariable Long productId, HttpSession session) {
         sessionService.requireAdmin(session);
-        Long tenantId = sessionService.requireTenantId(session);
-        productService.delete(tenantId, productId);
+        productService.delete(productId);
     }
 }
 
