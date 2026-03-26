@@ -22,6 +22,11 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+<<<<<<< HEAD
 target/
 /.idea/
 
+=======
+
+target/
+>>>>>>> 581c3a3 (Update gitignore and README)
